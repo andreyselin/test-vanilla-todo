@@ -1,26 +1,25 @@
-// import _ from 'lodash';
 import './style.css';
 
-// import from src modules
-import display from './methods.js';
-import Interactive from './interactive.js';
+import { tasksService } from './tasks.service.js';
+import { tasksController } from './tasks.controller.js';
 
-const inputList = document.getElementById('inputList');
+const createTaskForm = document.getElementById('createTaskForm');
 const addList = document.getElementById('addList');
 
-inputList.addEventListener('submit', (e) => {
+createTaskForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  display.addLists(addList.value);
+  tasksService.addTask(addList.value);
   addList.value = '';
 });
 
-document.querySelector('#btnClear').addEventListener('click', Interactive.clearCompletedToDoLists);
+document.querySelector('#archiveButton')
+  .addEventListener('click', () => tasksController.archiveCompletedTasks());
 
 window.addEventListener('load', () => {
   document.addEventListener('listUpdated', () => {
-    Interactive.checkStatusEvent();
+    tasksController.assignCheckboxEventHandlers();
   }, false);
-  Interactive.checkStatusEvent();
+  tasksController.assignCheckboxEventHandlers();
 });
 
-display.showLists();
+tasksService.showTasks();

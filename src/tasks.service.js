@@ -1,37 +1,38 @@
 // import from src modules folder
 
-import DataList from './datalist.js';
+import { Task } from './task.js';
+import { localStorageKeys, statusesToFilter } from './const.js';
 
 // get listed inputs from local storage
 
-export default class display {
-  static getToDoListFromStorage = () => {
+class TasksService {
+  getTasksListFromStorage = () => {
     let toDoLists;
 
-    if (JSON.parse(localStorage.getItem('LocalDataList')) === null) {
+    if (JSON.parse(localStorage.getItem(localStorageKeys.tasksList)) === null) {
       toDoLists = [];
     } else {
-      toDoLists = JSON.parse(localStorage.getItem('LocalDataList'));
+      toDoLists = JSON.parse(localStorage.getItem(localStorageKeys.tasksList));
     }
     return toDoLists;
   };
 
   // add listed inputs to the local storage
-  static addListToStorage = (toDoLists) => {
+  addListToStorage = (toDoLists) => {
     const item = JSON.stringify(toDoLists);
-    localStorage.setItem('LocalDataList', item);
+    localStorage.setItem(localStorageKeys.tasksList, item);
   };
 
   // index list inputs by number
-  static newIndexNum = (toDoLists) => {
+  newIndexNum = (toDoLists) => {
     toDoLists.forEach((item, i) => {
       item.index = i + 1;
     });
   }
 
   // delete from local storage
-  static deleteListData = (id) => {
-    let toDoLists = this.getToDoListFromStorage();
+  deleteListData = (id) => {
+    let toDoLists = this.getTasksListFromStorage();
     const ListItemToDelete = toDoLists[id];
 
     toDoLists = toDoLists.filter((item) => item !== ListItemToDelete);
@@ -40,8 +41,8 @@ export default class display {
     this.addListToStorage(toDoLists);
   };
 
-  static ListInputUpdate = (newDescription, id) => {
-    const toDoLists = this.getToDoListFromStorage();
+  listInputUpdate = (newDescription, id) => {
+    const toDoLists = this.getTasksListFromStorage();
     const updateList = toDoLists[id];
 
     toDoLists.forEach((item) => {
@@ -51,10 +52,10 @@ export default class display {
     });
 
     this.addListToStorage(toDoLists);
-    this.showLists();
+    this.showTasks();
   };
 
-  static removeToDoListBtn = () => {
+  removeToDoListBtn = () => {
     document.querySelectorAll('.remove_btn').forEach((button) => button.addEventListener('click', (event) => {
       event.preventDefault();
       let id;
@@ -64,17 +65,17 @@ export default class display {
         id = 0;
       }
       this.deleteListData(id);
-      this.showLists();
+      this.showTasks();
     }));
   };
 
-  // section created dynamiclly
-  static toDoListsHtml = ({ description, index }, statusCheck, statusCompleted) => {
+  // section created dynamically
+  createTaskDomElement = ({ description, completed, index }) => {
     const ul = document.createElement('ul');
     ul.className = 'to-do';
     ul.innerHTML = `
-        <li><input class="checkbox" id="${index}" type="checkbox" ${statusCheck}></li> 
-        <li><input id="LIST${index}" type="text" class="text${statusCompleted}" value="${description}" readonly></li>
+        <li><input class="checkbox" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
+        <li><input id="LIST${index}" type="text" class="text${completed ? '_completed' : ''}" value="${description}" readonly></li>
         <li class="remove-edit">
         <button class="edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
         <button class="remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
@@ -84,20 +85,15 @@ export default class display {
   }
 
   // show listed tasks
-  static showLists = () => {
-    const toDoLists = this.getToDoListFromStorage();
+  showTasks = () => {
+    const tasks = this.getTasksListFromStorage();
     document.querySelector('.toDoListContainer').innerHTML = '';
-    toDoLists.forEach((item) => {
-      let statusCheck;
-      let statusCompleted;
-      if (item.completed === true) {
-        statusCheck = 'checked';
-        statusCompleted = 'completed';
-      } else {
-        statusCheck = '';
-        statusCompleted = '';
-      }
-      document.querySelector('.toDoListContainer').appendChild(this.toDoListsHtml(item, statusCheck, statusCompleted));
+    tasks.forEach((task) => {
+      document
+        .querySelector('.toDoListContainer')
+        .appendChild(
+          this.createTaskDomElement(task)
+        );
     });
 
     this.removeToDoListBtn();
@@ -109,18 +105,18 @@ export default class display {
   };
 
   // add a task to a list
-  static addLists = (description) => {
-    const toDoLists = this.getToDoListFromStorage();
-    const index = toDoLists.length + 1;
-    const newtask = new DataList(description, false, index);
+  addTask = (description) => {
+    const allTasks = this.getTasksListFromStorage();
+    const index = allTasks.length + 1;
+    const newTask = new Task(description, false, index);
 
-    toDoLists.push(newtask);
-    this.addListToStorage(toDoLists);
-    this.showLists();
+    allTasks.push(newTask);
+    this.addListToStorage(allTasks);
+    this.showTasks();
   }
 
   // update to do list
-  static updateListBtnEvent = () => {
+  updateListBtnEvent = () => {
     document.querySelectorAll('.text').forEach((input) => input.addEventListener('keypress', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -135,13 +131,13 @@ export default class display {
         }
 
         document.getElementById(listID).setAttribute('readonly', 'readonly');
-        this.ListInputUpdate(document.getElementById(listID).value, (Number(listID.replace('LIST', '')) - 1));
+        this.listInputUpdate(document.getElementById(listID).value, (Number(listID.replace('LIST', '')) - 1));
       }
     }));
   }
 
   // edit list
-  static editListBtnEvent = () => {
+  editListBtnEvent = () => {
     let previousList = null;
     document.querySelectorAll('.edit_list_btn').forEach((button) => button.addEventListener('click', (event) => {
       event.preventDefault();
@@ -174,3 +170,5 @@ export default class display {
     }));
   };
 }
+
+export const tasksService = new TasksService();

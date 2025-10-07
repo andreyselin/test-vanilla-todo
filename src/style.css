@@ -57,7 +57,7 @@ i {
 }
 
 /* task list base */
-#inputList {
+#createTaskForm {
   justify-content: space-between;
   align-items: center;
   background-color: #fff;
@@ -106,7 +106,7 @@ i {
 }
 
 /* Clear task button */
-#btnClear {
+#archiveButton {
   height: 50px;
   color: rgb(147, 147, 147);
   border-left: none;
@@ -174,7 +174,7 @@ input:focus {
   font-size: 15px;
 }
 
-.textcompleted {
+.text_completed {
   text-decoration: line-through;
   border: none;
   font-size: 17px;
