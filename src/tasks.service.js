@@ -70,15 +70,24 @@ class TasksService {
   };
 
   // section created dynamically
-  createTaskDomElement = ({ description, completed, index }) => {
+  createTaskDomElement = ({ uuid, description, completed, index }) => {
     const ul = document.createElement('ul');
     ul.className = 'to-do';
     ul.innerHTML = `
-        <li><input class="checkbox" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
-        <li><input id="LIST${index}" type="text" class="text${completed ? '_completed' : ''}" value="${description}" readonly></li>
+        <li><input class="checkbox" data-uuid="${uuid}" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
+        <li>
+          <input
+            id="LIST${index}"
+            data-uuid="${uuid}"
+            type="text"
+            class="text-input ${completed ? 'text-input_completed' : ''}"
+            value="${description}"
+            readonly
+          />
+        </li>
         <li class="remove-edit">
-        <button class="edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
-        <button class="remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
+          <button class="edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
+          <button class="remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
         </li>
       `;
     return ul;

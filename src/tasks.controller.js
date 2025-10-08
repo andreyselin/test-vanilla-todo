@@ -1,35 +1,57 @@
 import { tasksService } from './tasks.service.js';
 
 class TasksController {
-  onToggleCompleted = (statusCheck, id) => {
+  onToggleCompleted = (isChecked, uuid) => {
     const tasks = tasksService.getTasksListFromStorage();
-    tasks[id].completed = statusCheck;
-    tasksService.addListToStorage(tasks);
+    const updatedTasks = tasks.map(el => el.uuid === uuid ? { ...el, completed: isChecked } : el);
+    tasksService.addListToStorage(updatedTasks);
     tasksService.showTasks();
   }
 
+  onSaveDescription = (description, uuid) => {
+    const tasks = tasksService.getTasksListFromStorage();
+    const updatedTasks = tasks.map(el => el.uuid === uuid ? { ...el, description } : el);
+    tasksService.addListToStorage(updatedTasks);
+    tasksService.showTasks();
+  }
+
+  onClickTextInput = (textInput) => {
+    textInput.removeAttribute('readonly');
+    textInput.classList.add('being-edited');
+    const keydownHandler = (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        this.onSaveDescription(textInput.value, textInput.getAttribute('data-uuid'));
+        textInput.removeEventListener('keydown', keydownHandler);
+      }
+    }
+    const clickOutsideHandler = (event) => {
+      if (!textInput.contains(event.target)) {
+        event.preventDefault();
+        this.onSaveDescription(textInput.value, textInput.getAttribute('data-uuid'));
+        document.removeEventListener('click', clickOutsideHandler);
+      }
+    }
+    document.addEventListener('click', clickOutsideHandler);
+    textInput.addEventListener('keydown', keydownHandler);
+  }
+
   // checkbox status
-  assignCheckboxEventHandlers = () => (
-    document
-      .querySelectorAll('.checkbox')
+  assignCheckboxEventHandlers = () => {
+    document.querySelectorAll('.checkbox')
       .forEach((checkbox) => checkbox.addEventListener('change', () => {
-        let statusCheck;
-        let id;
-        if (checkbox.id > 0) {
-          id = checkbox.id - 1;
-        } else {
-          id = 0;
-        }
+        const uuid = checkbox.getAttribute('data-uuid');
+        const isChecked = checkbox.checked === true;
 
-        if (checkbox.checked === true) {
-          statusCheck = true;
-        } else if (checkbox.checked !== true) {
-          statusCheck = false;
-        }
+        this.onToggleCompleted(isChecked, uuid);
+      }));
 
-        this.onToggleCompleted(statusCheck, id);
-      }))
-  )
+    document.querySelectorAll('.text-input')
+      .forEach((textInput) => textInput.addEventListener(
+        'click',
+        (event) => this.onClickTextInput(event.currentTarget)
+      ));
+  }
 
   archiveCompletedTasks = () => {
     let tasksList = tasksService.getTasksListFromStorage();
