@@ -1166,10 +1166,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"uuid@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "uuid@npm:13.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 7510ee1ab371be5339ef26ff8cabc2f4a2c60640ff880652968f758072f53bd4f4af1c8b0e671a8c9bb29ef926a24dec3ef0e3861d78183b39291a85743a9f96
+  languageName: node
+  linkType: hard
+
 "vanilla-todo@workspace:.":
   version: 0.0.0-use.local
   resolution: "vanilla-todo@workspace:."
   dependencies:
+    uuid: ^13.0.0
     vite: "npm:rolldown-vite@7.1.14"
   languageName: unknown
   linkType: soft
