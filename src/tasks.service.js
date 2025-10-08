@@ -1,9 +1,5 @@
-// import from src modules folder
-
 import { Task } from './task.js';
-import { localStorageKeys, statusesToFilter } from './const.js';
-
-// get listed inputs from local storage
+import { localStorageKeys } from './const.js';
 
 class TasksService {
   getTasksListFromStorage = () => {
@@ -70,10 +66,11 @@ class TasksService {
 
   // section created dynamically
   createTaskDomElement = ({ uuid, description, content, completed, index }) => {
-    const ul = document.createElement('ul');
-    ul.className = 'to-do';
-    ul.setAttribute('data-uuid', uuid);
-    ul.innerHTML = `
+    const div = document.createElement('div');
+    div.className = 'to-do-wrapper';
+    div.setAttribute('data-uuid', uuid);
+    div.innerHTML = `
+      <ul class="to-do">
         <li class="task-checkbox-container"><input class="checkbox" data-uuid="${uuid}" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
         <li class="task-text-inputs-container">
           <input
@@ -84,23 +81,38 @@ class TasksService {
             readonly
             required
           />
-          ok
         </li>
         <li class="remove-edit">
           <button class="small-button edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
           <div class="task-controls">
-          
-            ${
-              content === null
-                ? `<button class="small-button add-content" id="${index}"><i class="fa fa-file-lines icon"></i></button>`
-                : `<button class="small-button remove-content" id="${index}"><i class="fa fa-text-slash icon"></i></button>`
-            }
+            <button class="small-button add-content ${ content === null ? '' : 'hidden' }"><i class="fa fa-plus icon"></i></button>
+            <button class="small-button remove-content ${ content === null ? 'hidden' : '' }"><i class="fa fa-times icon"></i></button>
             <button class="small-button remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
             <button class="small-button hide-controls" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
           </div>
         </li>
-      `;
-    return ul;
+      </ul>
+      
+      ${content === null ? '' : `
+        <div class="content-container">
+          <textarea class="content-input" placeholder="Content">${content}</textarea>
+        </div>
+      `}
+    `;
+    return div;
+  }
+
+  setContent(uuid, content) {
+    const allTasks = this.getTasksListFromStorage();
+
+    const updatedTasks = allTasks.map((task) =>
+      task.uuid === uuid
+        ? { ...task, content }
+        : task
+    );
+
+    this.addListToStorage(updatedTasks);
+    this.showTasks();
   }
 
   // show listed tasks
@@ -134,12 +146,15 @@ class TasksService {
   }
 
   assignControlsEventHandlers() {
-    document.querySelectorAll('.to-do').forEach(taskElement => {
+    document.querySelectorAll('.to-do-wrapper').forEach(taskElement => {
       const uuid = taskElement.getAttribute('data-uuid');
       const textInputElement = taskElement.querySelector('.text-input')
       const taskControlsElement = taskElement.querySelector('.task-controls');
       const showControlsElement = taskElement.querySelector('.edit_list_btn');
       const hideControlsElement = taskElement.querySelector('.hide-controls');
+      const addContentElement = taskElement.querySelector('.add-content');
+      const removeContentElement = taskElement.querySelector('.remove-content');
+      const contentInputElement = taskElement.querySelector('.content-input')
 
       hideControlsElement.addEventListener('click', (event) => {
         event.preventDefault();
@@ -149,10 +164,10 @@ class TasksService {
         taskElement.style.background = 'none';
       });
 
-      taskControlsElement.addEventListener('click', (event) => {
+      showControlsElement.addEventListener('click', (event) => {
         event.preventDefault();
 
-        taskElement.style.background = 'rgb(230, 230, 184)';
+        // taskElement.style.background = 'rgb(230, 230, 184)';
         showControlsElement.style.display = 'none';
         taskControlsElement.style.display = 'flex';
 
@@ -167,6 +182,29 @@ class TasksService {
           textInputElement.classList.remove('being-edited');
           this.listInputUpdate(textInputElement.value, uuid);
         }
+      });
+
+      addContentElement.addEventListener('click', () => {
+        this.setContent(uuid, '');
+      });
+
+      removeContentElement.addEventListener('click', () => {
+        this.setContent(uuid, null);
+      });
+
+      /* Content */
+
+      contentInputElement?.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+          textInputElement.setAttribute('readonly', 'readonly');
+          textInputElement.classList.remove('being-edited');
+          this.setContent(uuid, contentInputElement.value);
+        }
+      });
+
+      contentInputElement?.addEventListener('click', (event) => {
+        contentInputElement.removeAttribute('readonly');
+        contentInputElement.classList.add('being-edited');
       });
     });
   }
