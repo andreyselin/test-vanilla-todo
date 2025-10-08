@@ -29,6 +29,7 @@ class TasksService {
     let tasks = this.getTasksListFromStorage();
     const updatedTasks = tasks.map((item) => item.uuid === uuid ? { ...item, archived: true } : item);
     this.saveTasks(updatedTasks);
+    this.showTasks();
   };
 
   onTextUpdate = (newDescription, uuid) => {
@@ -97,6 +98,7 @@ class TasksService {
   renderFilters = (filterStatus) => {
     const filtersContainer = document.querySelector('.filters-container');
     filtersContainer.innerHTML = `
+      <span>Show:</span>
       <label><input type="radio" name="choice" value="${statusesToFilter.all}"> All</label>
       <label><input type="radio" name="choice" value="${statusesToFilter.todo}"> Todo</label>
       <label><input type="radio" name="choice" value="${statusesToFilter.archived}"> Archived</label>

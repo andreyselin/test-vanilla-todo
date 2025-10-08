@@ -11,16 +11,41 @@ body {
   background-color: rgb(246, 246, 246);
 }
 
+
+
+.app-container {
+  width: 100vw;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-paper {
+  width: 50%;
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+  .app-paper {
+    width: 100%;
+  }
+}
+
 /* todolist list base */
 #toDoList {
   display: flex;
   flex-direction: column;
-  width: 50%;
+
   height: auto;
-  margin: 300px auto auto auto;
+  margin: auto;
   background-color: white;
   box-shadow: 0 4px 20px 30px rgba(0, 0, 0, 0.137);
 }
+
+
 
 ::placeholder {
   font-family: 'inter', sans-serif;
