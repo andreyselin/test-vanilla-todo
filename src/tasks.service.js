@@ -1,7 +1,14 @@
 import { Task } from './task.js';
-import { localStorageKeys } from './const.js';
+import { localStorageKeys, statusesToFilter } from './const.js';
 
 class TasksService {
+  getStoredFilterStatus = () => {
+    return localStorage.getItem(localStorageKeys.statusToFilter) || statusesToFilter.all;
+  }
+  setStoredFilterStatus = (filterStatus) => {
+    localStorage.setItem(localStorageKeys.statusToFilter, filterStatus);
+  }
+
   getTasksListFromStorage = () => {
     let toDoLists;
 
@@ -37,7 +44,6 @@ class TasksService {
     this.showTasks();
   };
 
-  // section created dynamically
   createTaskDomElement = ({ uuid, description, content, completed, index }) => {
     const div = document.createElement('div');
     div.className = 'to-do-wrapper';
@@ -88,8 +94,30 @@ class TasksService {
     this.showTasks();
   }
 
-  // show listed tasks
+  renderFilters = (filterStatus) => {
+    const filtersContainer = document.querySelector('.filters-container');
+    filtersContainer.innerHTML = `
+      <label><input type="radio" name="choice" value="${statusesToFilter.all}"> All</label>
+      <label><input type="radio" name="choice" value="${statusesToFilter.todo}"> Todo</label>
+      <label><input type="radio" name="choice" value="${statusesToFilter.archived}"> Archived</label>
+    `;
+    const radios = filtersContainer.querySelectorAll('input[name="choice"]');
+
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        this.setStoredFilterStatus(radio.value);
+        this.showTasks();
+      });
+      if (radio.value === filterStatus) {
+        radio.setAttribute('checked', 'checked');
+      }
+    });
+  }
+
   showTasks = () => {
+    const filterStatus = this.getStoredFilterStatus();
+    this.renderFilters(filterStatus);
+
     const tasks = this.getTasksListFromStorage();
     document.querySelector('.toDoListContainer').innerHTML = '';
     tasks.forEach((task) => {
@@ -103,7 +131,6 @@ class TasksService {
     this.assignControlsEventHandlers();
   };
 
-  // add a task to a list
   addTask = (description) => {
     const allTasks = this.getTasksListFromStorage();
     const index = allTasks.length + 1;
@@ -192,8 +219,6 @@ class TasksService {
         this.setContent(uuid, null);
       });
 
-      /* Content */
-
       contentInputElement?.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
           contentInputElement.setAttribute('readonly', 'readonly');
@@ -203,7 +228,6 @@ class TasksService {
       });
 
       contentInputElement?.addEventListener('click', () => {
-        console.log(contentInputElement.classList.entries().toArray());
         contentInputElement.classList.add('being-edited');
         contentInputElement.removeAttribute('readonly');
       });

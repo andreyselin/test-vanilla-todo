@@ -16,8 +16,11 @@
 <div id="toDoList">
   <div class="title">
     <h1 class="ttdl">Today's To Do List</h1>
-    <i class="fa fa-arrows-rotate icon"></i>
+    <button id="refreshButton" class="small-button">
+      <i class="fa fa-arrows-rotate icon"></i>
+    </button>
   </div>
+  <div class="filters-container"></div>
   <form id="createTaskForm" action="#" method="post">
     <div class="inputTask">
       <input id="addList" type="text" placeholder="Add to your to do list..." maxlength="80" required>
