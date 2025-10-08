@@ -8,13 +8,6 @@ class TasksController {
     tasksService.showTasks();
   }
 
-  onSaveDescription = (description, uuid) => {
-    const tasks = tasksService.getTasksListFromStorage();
-    const updatedTasks = tasks.map(el => el.uuid === uuid ? { ...el, description } : el);
-    tasksService.addListToStorage(updatedTasks);
-    tasksService.showTasks();
-  }
-
   onClickTextInput = (textInput) => {
     textInput.removeAttribute('readonly');
     textInput.classList.add('being-edited');

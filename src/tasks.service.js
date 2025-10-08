@@ -41,17 +41,16 @@ class TasksService {
     this.addListToStorage(toDoLists);
   };
 
-  listInputUpdate = (newDescription, id) => {
-    const toDoLists = this.getTasksListFromStorage();
-    const updateList = toDoLists[id];
+  listInputUpdate = (newDescription, uuid) => {
+    const storedTasks = this.getTasksListFromStorage();
 
-    toDoLists.forEach((item) => {
-      if (item === updateList) {
-        item.description = newDescription;
-      }
-    });
+    const updatedTasks = storedTasks.map((item) =>
+      item.uuid === uuid
+        ? { ...item, description: newDescription }
+        : item
+    );
 
-    this.addListToStorage(toDoLists);
+    this.addListToStorage(updatedTasks);
     this.showTasks();
   };
 
@@ -79,7 +78,6 @@ class TasksService {
         <li class="task-text-inputs-container">
           <input
             id="LIST${index}"
-            data-uuid="${uuid}"
             type="text"
             class="text-input ${completed ? 'text-input_completed' : ''}"
             value="${description}"
@@ -89,16 +87,16 @@ class TasksService {
           ok
         </li>
         <li class="remove-edit">
-          <button class="small-button edit_list_btn" data-uuid="${uuid}" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
-          <div class="task-controls" data-uuid="${uuid}">
+          <button class="small-button edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
+          <div class="task-controls">
           
             ${
               content === null
-                ? `<button class="small-button add-content" data-uuid="${uuid}" id="${index}"><i class="fa fa-file-lines icon"></i></button>`
-                : `<button class="small-button remove-content" data-uuid="${uuid}" id="${index}"><i class="fa fa-text-slash icon"></i></button>`
+                ? `<button class="small-button add-content" id="${index}"><i class="fa fa-file-lines icon"></i></button>`
+                : `<button class="small-button remove-content" id="${index}"><i class="fa fa-text-slash icon"></i></button>`
             }
-            <button class="small-button remove_btn" data-uuid="${uuid}" id="${index}"><i class="fa fa-trash-can icon"></i></button>
-            <button class="small-button hide-controls" data-uuid="${uuid}" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
+            <button class="small-button remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
+            <button class="small-button hide-controls" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
           </div>
         </li>
       `;
@@ -118,8 +116,6 @@ class TasksService {
     });
 
     this.removeToDoListBtn();
-    // this.editListBtnEvent();
-    this.assignInlineTextEventHandlers();
     this.assignControlsEventHandlers();
 
     const event = new Event('listUpdated');
@@ -137,111 +133,43 @@ class TasksService {
     this.showTasks();
   }
 
-  // update to do list
-  assignInlineTextEventHandlers = () => {
-    document.querySelectorAll('.text-input').forEach((input) => input.addEventListener('keypress', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        const inputListId = 'LIST';
-        const ListIdSelected = event.currentTarget.id;
-        let listID;
-
-        if (!ListIdSelected.includes('LIST')) {
-          listID = inputListId.concat(ListIdSelected);
-        } else {
-          listID = ListIdSelected;
-        }
-
-        document.getElementById(listID).setAttribute('readonly', 'readonly');
-        this.listInputUpdate(document.getElementById(listID).value, (Number(listID.replace('LIST', '')) - 1));
-      }
-    }));
-  }
-
   assignControlsEventHandlers() {
-    let previousList = null;
-
     document.querySelectorAll('.to-do').forEach(taskElement => {
-      taskElement.querySelector('.hide-controls').addEventListener(
-        'click',
-        (event) => {
-          event.preventDefault();
-          taskElement.querySelector('.text-input').classList.remove('being-edited');
-          taskElement.querySelector('.task-controls').style.display = 'none';
-          taskElement.querySelector('.edit_list_btn').style.display = 'block';
-        }
-      );
+      const uuid = taskElement.getAttribute('data-uuid');
+      const textInputElement = taskElement.querySelector('.text-input')
+      const taskControlsElement = taskElement.querySelector('.task-controls');
+      const showControlsElement = taskElement.querySelector('.edit_list_btn');
+      const hideControlsElement = taskElement.querySelector('.hide-controls');
 
-      // Just copied here so far:
-      taskElement.querySelector('.edit_list_btn').addEventListener('click', (event) => {
+      hideControlsElement.addEventListener('click', (event) => {
         event.preventDefault();
-        const inputListId = 'LIST';
-        const ListIdSelected = event.currentTarget.id;
-        let listID;
+        textInputElement.classList.remove('being-edited');
+        taskControlsElement.style.display = 'none';
+        showControlsElement.style.display = 'block';
+        taskElement.style.background = 'none';
+      });
 
-        if (!ListIdSelected.includes('LIST')) {
-          listID = inputListId.concat(ListIdSelected);
-        } else {
-          listID = ListIdSelected;
+      taskControlsElement.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        taskElement.style.background = 'rgb(230, 230, 184)';
+        showControlsElement.style.display = 'none';
+        taskControlsElement.style.display = 'flex';
+
+        textInputElement.removeAttribute('readonly');
+        textInputElement.focus();
+        textInputElement.classList.add('being-edited');
+      });
+
+      textInputElement.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+          textInputElement.setAttribute('readonly', 'readonly');
+          textInputElement.classList.remove('being-edited');
+          this.listInputUpdate(textInputElement.value, uuid);
         }
-
-        // if (previousList !== null) {
-        //   previousList.getElementById(listID).removeAttribute('readonly');
-        // }
-
-        const listItem = event.target.closest('li');
-        // previousList = listItem;
-        const ulItem = event.target.closest('ul');
-
-        listItem.style.background = 'rgb(230, 230, 184)';
-        ulItem.style.background = 'rgb(230, 230, 184)';
-
-        document.getElementById(listID).removeAttribute('readonly');
-        document.getElementById(listID).focus();
-        document.getElementById(listID).style.background = 'rgb(230, 230, 184)';
-        listItem.querySelector('.edit_list_btn').style.display = 'none';
-        listItem.querySelector('.task-controls').style.display = 'flex';
-        taskElement.querySelector('.text-input').classList.add('being-edited');
-      })
-    })
+      });
+    });
   }
-
-/*
-  // edit list
-  editListBtnEvent = () => {
-    let previousList = null;
-    document.querySelectorAll('.edit_list_btn')
-      .forEach((button) => button.addEventListener('click', (event) => {
-        event.preventDefault();
-        const inputListId = 'LIST';
-        const ListIdSelected = event.currentTarget.id;
-        let listID;
-
-        if (!ListIdSelected.includes('LIST')) {
-          listID = inputListId.concat(ListIdSelected);
-        } else {
-          listID = ListIdSelected;
-        }
-
-        if (previousList !== null) {
-          previousList.getElementById(listID).removeAttribute('readonly');
-        }
-
-        const listItem = event.target.closest('li');
-        previousList = listItem;
-        const ulItem = event.target.closest('ul');
-
-        listItem.style.background = 'rgb(230, 230, 184)';
-        ulItem.style.background = 'rgb(230, 230, 184)';
-
-        document.getElementById(listID).removeAttribute('readonly');
-        document.getElementById(listID).focus();
-        document.getElementById(listID).style.background = 'rgb(230, 230, 184)';
-        listItem.querySelector('.edit_list_btn').style.display = 'none';
-        listItem.querySelector('.task-controls').style.display = 'flex';
-      }));
-  };
-  */
 }
 
 export const tasksService = new TasksService();

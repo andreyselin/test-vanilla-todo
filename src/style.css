@@ -186,6 +186,7 @@ input:focus {
 
 .being-edited {
   text-decoration: none;
+  color: initial;
   border: 1px solid gray;
 }
 
