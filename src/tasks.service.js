@@ -13,31 +13,18 @@ class TasksService {
     return toDoLists;
   };
 
-  // add listed inputs to the local storage
-  addListToStorage = (toDoLists) => {
+  saveTasks = (toDoLists) => {
     const item = JSON.stringify(toDoLists);
     localStorage.setItem(localStorageKeys.tasksList, item);
   };
 
-  // index list inputs by number
-  newIndexNum = (toDoLists) => {
-    toDoLists.forEach((item, i) => {
-      item.index = i + 1;
-    });
-  }
-
-  // delete from local storage
-  deleteListData = (id) => {
-    let toDoLists = this.getTasksListFromStorage();
-    const ListItemToDelete = toDoLists[id];
-
-    toDoLists = toDoLists.filter((item) => item !== ListItemToDelete);
-
-    this.newIndexNum(toDoLists);
-    this.addListToStorage(toDoLists);
+  archiveTask = (uuid) => {
+    let tasks = this.getTasksListFromStorage();
+    const updatedTasks = tasks.map((item) => item.uuid === uuid ? { ...item, archived: true } : item);
+    this.saveTasks(updatedTasks);
   };
 
-  listInputUpdate = (newDescription, uuid) => {
+  onTextUpdate = (newDescription, uuid) => {
     const storedTasks = this.getTasksListFromStorage();
 
     const updatedTasks = storedTasks.map((item) =>
@@ -46,22 +33,8 @@ class TasksService {
         : item
     );
 
-    this.addListToStorage(updatedTasks);
+    this.saveTasks(updatedTasks);
     this.showTasks();
-  };
-
-  removeToDoListBtn = () => {
-    document.querySelectorAll('.remove_btn').forEach((button) => button.addEventListener('click', (event) => {
-      event.preventDefault();
-      let id;
-      if (button.id > 0) {
-        id = button.id - 1;
-      } else {
-        id = 0;
-      }
-      this.deleteListData(id);
-      this.showTasks();
-    }));
   };
 
   // section created dynamically
@@ -87,7 +60,7 @@ class TasksService {
           <div class="task-controls">
             <button class="small-button add-content ${ content === null ? '' : 'hidden' }"><i class="fa fa-plus icon"></i></button>
             <button class="small-button remove-content ${ content === null ? 'hidden' : '' }"><i class="fa fa-times icon"></i></button>
-            <button class="small-button remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
+            <button class="small-button remove_btn" id="${index}"><i class="fa fa-box-archive icon"></i></button>
             <button class="small-button hide-controls" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
           </div>
         </li>
@@ -111,7 +84,7 @@ class TasksService {
         : task
     );
 
-    this.addListToStorage(updatedTasks);
+    this.saveTasks(updatedTasks);
     this.showTasks();
   }
 
@@ -127,11 +100,7 @@ class TasksService {
         );
     });
 
-    this.removeToDoListBtn();
     this.assignControlsEventHandlers();
-
-    const event = new Event('listUpdated');
-    document.dispatchEvent(event);
   };
 
   // add a task to a list
@@ -141,33 +110,56 @@ class TasksService {
     const newTask = new Task(description, false, index);
 
     allTasks.push(newTask);
-    this.addListToStorage(allTasks);
+    this.saveTasks(allTasks);
+    this.showTasks();
+  }
+
+  onToggleCompleted = (isChecked, uuid) => {
+    const tasks = tasksService.getTasksListFromStorage();
+    const updatedTasks = tasks.map(el => el.uuid === uuid ? { ...el, completed: isChecked } : el);
+    tasksService.saveTasks(updatedTasks);
+    tasksService.showTasks();
+  }
+
+  archiveCompletedTasks = () => {
+    const tasks = this.getTasksListFromStorage();
+    const updatedTasks = tasks.map((item) => item.completed ? { ...item, archived: true } : item);
+    tasksService.saveTasks(updatedTasks);
     this.showTasks();
   }
 
   assignControlsEventHandlers() {
     document.querySelectorAll('.to-do-wrapper').forEach(taskElement => {
       const uuid = taskElement.getAttribute('data-uuid');
-      const textInputElement = taskElement.querySelector('.text-input')
+      const textInputElement = taskElement.querySelector('.text-input');
       const taskControlsElement = taskElement.querySelector('.task-controls');
       const showControlsElement = taskElement.querySelector('.edit_list_btn');
       const hideControlsElement = taskElement.querySelector('.hide-controls');
       const addContentElement = taskElement.querySelector('.add-content');
       const removeContentElement = taskElement.querySelector('.remove-content');
-      const contentInputElement = taskElement.querySelector('.content-input')
+      const contentInputElement = taskElement.querySelector('.content-input');
+      const checkboxInputElement = taskElement.querySelector('.checkbox');
+      const removeTaskElement = document.querySelector('.remove_btn');
 
-      hideControlsElement.addEventListener('click', (event) => {
+      removeTaskElement.addEventListener('click', (event) => {
         event.preventDefault();
+        this.archiveTask(uuid);
+      });
+
+      checkboxInputElement.addEventListener('change', () => {
+        const isChecked = checkboxInputElement.checked === true;
+        this.onToggleCompleted(isChecked, uuid);
+      });
+
+      hideControlsElement.addEventListener('click', () => {
         textInputElement.classList.remove('being-edited');
         taskControlsElement.style.display = 'none';
         showControlsElement.style.display = 'block';
         taskElement.style.background = 'none';
       });
 
-      showControlsElement.addEventListener('click', (event) => {
-        event.preventDefault();
-
-        // taskElement.style.background = 'rgb(230, 230, 184)';
+      showControlsElement.addEventListener('click', () => {
+        taskElement.style.background = 'rgb(230, 230, 184)';
         showControlsElement.style.display = 'none';
         taskControlsElement.style.display = 'flex';
 
@@ -176,11 +168,19 @@ class TasksService {
         textInputElement.classList.add('being-edited');
       });
 
+      textInputElement.addEventListener(
+        'click',
+        () => {
+          textInputElement.removeAttribute('readonly');
+          textInputElement.classList.add('being-edited');
+        }
+      );
+
       textInputElement.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
           textInputElement.setAttribute('readonly', 'readonly');
           textInputElement.classList.remove('being-edited');
-          this.listInputUpdate(textInputElement.value, uuid);
+          this.onTextUpdate(textInputElement.value, uuid);
         }
       });
 
@@ -196,15 +196,16 @@ class TasksService {
 
       contentInputElement?.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
-          textInputElement.setAttribute('readonly', 'readonly');
-          textInputElement.classList.remove('being-edited');
+          contentInputElement.setAttribute('readonly', 'readonly');
+          contentInputElement.classList.remove('being-edited');
           this.setContent(uuid, contentInputElement.value);
         }
       });
 
-      contentInputElement?.addEventListener('click', (event) => {
-        contentInputElement.removeAttribute('readonly');
+      contentInputElement?.addEventListener('click', () => {
+        console.log(contentInputElement.classList.entries().toArray());
         contentInputElement.classList.add('being-edited');
+        contentInputElement.removeAttribute('readonly');
       });
     });
   }

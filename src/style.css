@@ -184,12 +184,6 @@ input:focus {
   color: #9b9b9b;
 }
 
-.being-edited {
-  text-decoration: none;
-  color: initial;
-  border: 1px solid gray;
-}
-
 /* edit button */
 .edit_list_btn {
   cursor: pointer;
@@ -212,7 +206,6 @@ input:focus {
   border-bottom: 0.01px solid #d3d3d3;
 }
 .to-do {
-  background: #fff;
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -256,8 +249,17 @@ input:focus {
   padding: 0 20px 0 40px;
 }
 .content-input {
-  border: 1px solid gray;
+  background: none;
+  border: none;
+  /*border: 1px solid #eee;*/
   border-radius: 4px;
   padding: 4px;
   width: 100%;
+}
+
+.being-edited {
+  text-decoration: none;
+  color: initial;
+  border: 1px solid gray;
+  background: #fff;
 }
