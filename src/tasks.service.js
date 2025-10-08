@@ -118,7 +118,18 @@ class TasksService {
     const filterStatus = this.getStoredFilterStatus();
     this.renderFilters(filterStatus);
 
-    const tasks = this.getTasksListFromStorage();
+    const unfilteredTasks = this.getTasksListFromStorage();
+
+    const tasks = unfilteredTasks.filter(el => {
+      if (filterStatus === statusesToFilter.archived) {
+        return el.archived;
+      }
+      if (filterStatus === statusesToFilter.todo) {
+        return !el.completed;
+      }
+      return true;
+    });
+
     document.querySelector('.toDoListContainer').innerHTML = '';
     tasks.forEach((task) => {
       document
