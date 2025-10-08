@@ -18,22 +18,6 @@ class TasksController {
   onClickTextInput = (textInput) => {
     textInput.removeAttribute('readonly');
     textInput.classList.add('being-edited');
-    const keydownHandler = (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        this.onSaveDescription(textInput.value, textInput.getAttribute('data-uuid'));
-        textInput.removeEventListener('keydown', keydownHandler);
-      }
-    }
-    const clickOutsideHandler = (event) => {
-      if (!textInput.contains(event.target)) {
-        event.preventDefault();
-        this.onSaveDescription(textInput.value, textInput.getAttribute('data-uuid'));
-        document.removeEventListener('click', clickOutsideHandler);
-      }
-    }
-    document.addEventListener('click', clickOutsideHandler);
-    textInput.addEventListener('keydown', keydownHandler);
   }
 
   // checkbox status
@@ -55,16 +39,6 @@ class TasksController {
 
   archiveCompletedTasks = () => {
     let tasksList = tasksService.getTasksListFromStorage();
-
-    // const updatedTodoLists = toDoLists.map((element) => {
-    //   if (!element.archived && element.completed) {
-    //     return {
-    //       ...element,
-    //       archived: true,
-    //     }
-    //   }
-    // });
-
     tasksList = tasksList.filter((item) => item.completed !== true);
     tasksService.newIndexNum(tasksList);
     tasksService.addListToStorage(tasksList);

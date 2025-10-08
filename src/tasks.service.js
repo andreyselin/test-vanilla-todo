@@ -70,12 +70,13 @@ class TasksService {
   };
 
   // section created dynamically
-  createTaskDomElement = ({ uuid, description, completed, index }) => {
+  createTaskDomElement = ({ uuid, description, content, completed, index }) => {
     const ul = document.createElement('ul');
     ul.className = 'to-do';
+    ul.setAttribute('data-uuid', uuid);
     ul.innerHTML = `
-        <li><input class="checkbox" data-uuid="${uuid}" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
-        <li>
+        <li class="task-checkbox-container"><input class="checkbox" data-uuid="${uuid}" id="${index}" type="checkbox" ${completed ? 'checked' : ''}></li> 
+        <li class="task-text-inputs-container">
           <input
             id="LIST${index}"
             data-uuid="${uuid}"
@@ -83,11 +84,22 @@ class TasksService {
             class="text-input ${completed ? 'text-input_completed' : ''}"
             value="${description}"
             readonly
+            required
           />
+          ok
         </li>
         <li class="remove-edit">
-          <button class="edit_list_btn" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
-          <button class="remove_btn" id="${index}"><i class="fa fa-trash-can icon"></i></button>
+          <button class="small-button edit_list_btn" data-uuid="${uuid}" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
+          <div class="task-controls" data-uuid="${uuid}">
+          
+            ${
+              content === null
+                ? `<button class="small-button add-content" data-uuid="${uuid}" id="${index}"><i class="fa fa-file-lines icon"></i></button>`
+                : `<button class="small-button remove-content" data-uuid="${uuid}" id="${index}"><i class="fa fa-text-slash icon"></i></button>`
+            }
+            <button class="small-button remove_btn" data-uuid="${uuid}" id="${index}"><i class="fa fa-trash-can icon"></i></button>
+            <button class="small-button hide-controls" data-uuid="${uuid}" id="${index}"><i class="fa fa-ellipsis-v icon"></i></button>
+          </div>
         </li>
       `;
     return ul;
@@ -106,8 +118,9 @@ class TasksService {
     });
 
     this.removeToDoListBtn();
-    this.editListBtnEvent();
-    this.updateListBtnEvent();
+    // this.editListBtnEvent();
+    this.assignInlineTextEventHandlers();
+    this.assignControlsEventHandlers();
 
     const event = new Event('listUpdated');
     document.dispatchEvent(event);
@@ -125,8 +138,8 @@ class TasksService {
   }
 
   // update to do list
-  updateListBtnEvent = () => {
-    document.querySelectorAll('.text').forEach((input) => input.addEventListener('keypress', (event) => {
+  assignInlineTextEventHandlers = () => {
+    document.querySelectorAll('.text-input').forEach((input) => input.addEventListener('keypress', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         const inputListId = 'LIST';
@@ -145,39 +158,90 @@ class TasksService {
     }));
   }
 
+  assignControlsEventHandlers() {
+    let previousList = null;
+
+    document.querySelectorAll('.to-do').forEach(taskElement => {
+      taskElement.querySelector('.hide-controls').addEventListener(
+        'click',
+        (event) => {
+          event.preventDefault();
+          taskElement.querySelector('.text-input').classList.remove('being-edited');
+          taskElement.querySelector('.task-controls').style.display = 'none';
+          taskElement.querySelector('.edit_list_btn').style.display = 'block';
+        }
+      );
+
+      // Just copied here so far:
+      taskElement.querySelector('.edit_list_btn').addEventListener('click', (event) => {
+        event.preventDefault();
+        const inputListId = 'LIST';
+        const ListIdSelected = event.currentTarget.id;
+        let listID;
+
+        if (!ListIdSelected.includes('LIST')) {
+          listID = inputListId.concat(ListIdSelected);
+        } else {
+          listID = ListIdSelected;
+        }
+
+        // if (previousList !== null) {
+        //   previousList.getElementById(listID).removeAttribute('readonly');
+        // }
+
+        const listItem = event.target.closest('li');
+        // previousList = listItem;
+        const ulItem = event.target.closest('ul');
+
+        listItem.style.background = 'rgb(230, 230, 184)';
+        ulItem.style.background = 'rgb(230, 230, 184)';
+
+        document.getElementById(listID).removeAttribute('readonly');
+        document.getElementById(listID).focus();
+        document.getElementById(listID).style.background = 'rgb(230, 230, 184)';
+        listItem.querySelector('.edit_list_btn').style.display = 'none';
+        listItem.querySelector('.task-controls').style.display = 'flex';
+        taskElement.querySelector('.text-input').classList.add('being-edited');
+      })
+    })
+  }
+
+/*
   // edit list
   editListBtnEvent = () => {
     let previousList = null;
-    document.querySelectorAll('.edit_list_btn').forEach((button) => button.addEventListener('click', (event) => {
-      event.preventDefault();
-      const inputListId = 'LIST';
-      const ListIdSelected = event.currentTarget.id;
-      let listID;
+    document.querySelectorAll('.edit_list_btn')
+      .forEach((button) => button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const inputListId = 'LIST';
+        const ListIdSelected = event.currentTarget.id;
+        let listID;
 
-      if (!ListIdSelected.includes('LIST')) {
-        listID = inputListId.concat(ListIdSelected);
-      } else {
-        listID = ListIdSelected;
-      }
+        if (!ListIdSelected.includes('LIST')) {
+          listID = inputListId.concat(ListIdSelected);
+        } else {
+          listID = ListIdSelected;
+        }
 
-      if (previousList !== null) {
-        previousList.getElementById(listID).removeAttribute('readonly');
-      }
+        if (previousList !== null) {
+          previousList.getElementById(listID).removeAttribute('readonly');
+        }
 
-      const listItem = event.target.closest('li');
-      previousList = listItem;
-      const ulItem = event.target.closest('ul');
+        const listItem = event.target.closest('li');
+        previousList = listItem;
+        const ulItem = event.target.closest('ul');
 
-      listItem.style.background = 'rgb(230, 230, 184)';
-      ulItem.style.background = 'rgb(230, 230, 184)';
+        listItem.style.background = 'rgb(230, 230, 184)';
+        ulItem.style.background = 'rgb(230, 230, 184)';
 
-      document.getElementById(listID).removeAttribute('readonly');
-      document.getElementById(listID).focus();
-      document.getElementById(listID).style.background = 'rgb(230, 230, 184)';
-      listItem.querySelector('.edit_list_btn').style.display = 'none';
-      listItem.querySelector('.remove_btn').style.display = 'block';
-    }));
+        document.getElementById(listID).removeAttribute('readonly');
+        document.getElementById(listID).focus();
+        document.getElementById(listID).style.background = 'rgb(230, 230, 184)';
+        listItem.querySelector('.edit_list_btn').style.display = 'none';
+        listItem.querySelector('.task-controls').style.display = 'flex';
+      }));
   };
+  */
 }
 
 export const tasksService = new TasksService();
